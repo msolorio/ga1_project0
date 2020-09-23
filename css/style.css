@@ -6,6 +6,7 @@
 
 .pets {
   display: flex;
+  flex-wrap: wrap;
 }
 
 .pet {
@@ -20,4 +21,26 @@
 
 .pet-img {
   width: 100%;
+}
+
+.pet-status-group {
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.pet-status {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.pet-interactions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pet-interact-button {
+  padding: 5px 10px;
 }
