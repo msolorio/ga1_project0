@@ -16,7 +16,6 @@ const $createPetInput = $('#pet-input');
 const $body = $('body');
 const $switchLights = $('#switch-lights');
 
-// - CREATE 1 TOMAGOTCHI CLASS
 class Pet {
   constructor(petName, petId, hunger=0, sleepiness=0, boredom=0) {
     this.petName = petName;
@@ -32,6 +31,69 @@ class Pet {
       sleepiness: this.sleepiness,
       boredom: this.boredom
     }
+  }
+
+  renderAllPetsStats() {
+    $(`#pet-hunger-${this.petId}`).text(this.hunger);
+    $(`#pet-sleepiness-${this.petId}`).text(this.sleepiness);
+    $(`#pet-boredom-${this.petId}`).text(this.boredom);
+  }
+
+  resetPetStat(stat) {
+    this[stat] = 0;
+    this.renderAllPetsStats();
+  }
+
+  handleSleepiness(lightIsOn) {
+    if (lightIsOn) this.sleepiness += 1;
+    else if (!lightIsOn && this.sleepiness > 0) {
+      this.sleepiness -= 1;
+    }
+  }
+
+  incrementPetStats(lightIsOn) {
+    this.hunger += 1;
+    this.boredom += 1;
+    this.handleSleepiness(lightIsOn);
+  }
+
+  getPetMarkup() {
+    return (`
+      <div class="pet" id="${this.petId}">
+        <h3 class="pet-name">${this.petName}</h3>
+        <img class="pet-img" src="./images/snail1.jpg" alt="pet" />
+        <div class="pet-status-group">
+          <span class="pet-status">
+            <p>Hunger:</p>
+            <p id="pet-hunger-${this.petId}">${this.hunger}</p>
+          </span>
+          <span class="pet-status">
+            <p>Sleepiness:</p>
+            <p id="pet-sleepiness-${this.petId}">${this.sleepiness}</p>
+          </span>
+          <span class="pet-status">
+            <p>Boredom:</p>
+            <p id="pet-boredom-${this.petId}">${this.boredom}<p/>
+          </span>
+        </div>
+        <div class="pet-interactions">
+          <button
+            class="pet-interact-button pet-feed"
+            data-petid=${this.petId}>
+            Feed
+          </button>
+          <button
+            class="pet-interact-button pet-play"
+            data-petid=${this.petId}>
+            Play
+          </button>
+        </div>
+      </div>
+    `);
+  }
+
+  renderPet() {
+    $pets.append(this.getPetMarkup());
   }
 }
 
@@ -58,46 +120,14 @@ class Game {
     this.showHideButtons(lightIsOn);
   }
 
-  // DATA
-  // TODO: move to Pet class
-  resetPetStat(petId, stat) {
-    const petToUpdate = this.pets.find((pet) => pet.petId === petId);
-    petToUpdate[stat] = 0;
-    this.renderAllPetsStats(this.pets);
-  }
-
-  handleSleepiness(pet, lightIsOn) {
-    if (lightIsOn) pet.sleepiness += 1;
-    else if (!lightIsOn && pet.sleepiness > 0) {
-      pet.sleepiness -= 1;
-    }
-  }
-
-  // TODO: move to Pet class
-  incrementPetStats(pet, lightIsOn) {
-    pet.hunger += 1;
-    pet.boredom += 1;
-    this.handleSleepiness(pet, lightIsOn);
-  }
-
   incrementAllPetsStats(allPets, lightIsOn) {
-    allPets.forEach((pet) => {
-      this.incrementPetStats(pet, lightIsOn);
-    })
-  }
-
-  renderAllPetsStats(allPets) {
-    allPets.forEach((pet) => {
-      $(`#pet-hunger-${pet.petId}`).text(pet.hunger);
-      $(`#pet-sleepiness-${pet.petId}`).text(pet.sleepiness);
-      $(`#pet-boredom-${pet.petId}`).text(pet.boredom);
-    });
+    allPets.forEach((pet) => pet.incrementPetStats(lightIsOn));
   }
 
   setTimer() {
     const gameTimer = window.setInterval(() => {
       this.incrementAllPetsStats(this.pets, this.lightIsOn);
-      this.renderAllPetsStats(this.pets);
+      this.pets.forEach((pet) => pet.renderAllPetsStats());
     }, 3000);
   }
 
@@ -113,12 +143,14 @@ class Game {
 
     $pets.on('click', '.pet-feed', (event) => {
       const petId = $(event.target).data('petid');
-      this.resetPetStat(petId, 'hunger');
+      const petToUpdate = this.pets.find((pet) => pet.petId === petId);
+      petToUpdate.resetPetStat('hunger');
     });
 
     $pets.on('click', '.pet-play', (event) => {
       const petId = $(event.target).data('petid');
-      this.resetPetStat(petId, 'boredom');
+      const petToUpdate = this.pets.find((pet) => pet.petId === petId);
+      petToUpdate.resetPetStat('boredom');
     });
 
     $switchLights.on('click', () => {
@@ -130,56 +162,12 @@ class Game {
   createPet(petName) {
     const newPet = new Pet(petName, this.indexCount);
     this.pets.push(newPet);
-    this.renderPet(newPet);
+    this.pets.length === 1 && $pets.html('');
+    newPet.renderPet();
     
     this.indexCount += 1;
   }
-
-  // RENDER
-  // TODO: move to Pet class
-  getPetMarkup(petData) {
-    return (`
-      <div class="pet" id="${petData.petId}">
-        <h3 class="pet-name">${petData.petName}</h3>
-        <img class="pet-img" src="./images/snail1.jpg" alt="pet" />
-        <div class="pet-status-group">
-          <span class="pet-status">
-            <p>Hunger:</p>
-            <p id="pet-hunger-${petData.petId}">${petData.hunger}</p>
-          </span>
-          <span class="pet-status">
-            <p>Sleepiness:</p>
-            <p id="pet-sleepiness-${petData.petId}">${petData.sleepiness}</p>
-          </span>
-          <span class="pet-status">
-            <p>Boredom:</p>
-            <p id="pet-boredom-${petData.petId}">${petData.boredom}<p/>
-          </span>
-        </div>
-        <div class="pet-interactions">
-          <button
-            class="pet-interact-button pet-feed"
-            data-petid=${petData.petId}>
-            Feed
-          </button>
-          <button
-            class="pet-interact-button pet-play"
-            data-petid=${petData.petId}>
-            Play
-          </button>
-        </div>
-      </div>
-    `);
-  }
-
-  // TODO: move to Pet class
-  renderPet(petData) {
-    this.pets.length === 1 && $pets.html('');
-    $pets.append(this.getPetMarkup(petData));
-  }
-
 }
 
 const game = new Game();
 game.startGame();
-
